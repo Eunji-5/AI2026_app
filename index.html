@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세이프스코어 키즈 (SafeScore Kids) - 초등학교 & 어린이보호구역 안전지수 지도</title>
+  <meta name="description" content="공공데이터 기반 전국 초등학교 및 어린이보호구역 안전지수(0~100점) 5단계 조회 지도 서비스">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS (100% Free OpenStreetMap library, No API Key Required) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <!-- Leaflet MarkerCluster CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app-container">
+    <!-- Floating Top Bar Wrapper -->
+    <div class="top-bar-wrapper">
+      <!-- Header Bar -->
+      <header class="app-header">
+        <div class="header-brand">
+          <div class="brand-icon">🛡️</div>
+          <div class="brand-title-group">
+            <h1>SafeScore Kids <span>v1.4</span></h1>
+            <div class="brand-subtitle">공공데이터 기반 어린이보호구역 안전지수 맵</div>
+          </div>
+        </div>
+        
+        <div class="header-actions">
+          <button id="btn-download-prd-direct" class="btn-header btn-header-save">
+            💾 PRD 바로 저장
+          </button>
+          <button id="btn-open-prd" class="btn-header">
+            📄 PRD 내용 보기
+          </button>
+          <button id="btn-my-location" class="btn-header">
+            🎯 내 위치
+          </button>
+          <button id="btn-open-ranking" class="btn-header">
+            🏆 안전지수 랭킹
+          </button>
+        </div>
+      </header>
+
+      <!-- Floating Search & Filter Controls -->
+      <div class="control-panel">
+        <div class="search-box-wrapper">
+          <div class="search-input-group">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-input" class="search-input" placeholder="학교명, 지역명(예: 가산초, 이천시 송정동) 검색..." autocomplete="off">
+            <button id="search-clear-btn" class="search-clear-btn">✕</button>
+          </div>
+          <!-- Search Dropdown -->
+          <div id="search-dropdown" class="search-results-dropdown"></div>
+        </div>
+
+        <!-- Filter Chips -->
+        <div class="filter-chips-container">
+          <button class="chip-btn active" data-filter="all">🎒 전체 보기</button>
+          <button class="chip-btn" data-filter="초등학교">🏫 초등학교</button>
+          <button class="chip-btn" data-filter="유치원">🐥 유치원</button>
+          <button class="chip-btn" data-filter="어린이집">👶 어린이집</button>
+          <button class="chip-btn chip-warning" data-filter="danger">🚨 주의/위험만</button>
+          <button class="chip-btn" data-filter="safe">🟢 안전지역만</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Free OpenStreetMap Canvas -->
+    <div id="map"></div>
+
+    <!-- Map Floating Stats Overlay -->
+    <div class="map-stats-badge">
+      <div class="stat-item">
+        <span class="stat-label">조회 중인 보호구역</span>
+        <span id="stat-total-count" class="stat-value">14,647 개</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">전국 평균 안전지수</span>
+        <span id="stat-avg-score" class="stat-value">68.4 점</span>
+      </div>
+    </div>
+
+    <!-- Cute Bottom Sheet Detail Modal -->
+    <div id="detail-modal" class="detail-modal">
+      <div class="modal-drag-handle"></div>
+      <div class="modal-header">
+        <div>
+          <span id="modal-type-badge" class="modal-facility-type">🏫 초등학교</span>
+          <div id="modal-title" class="modal-facility-name">가산초등학교</div>
+        </div>
+        <button id="modal-close-btn" class="modal-close-btn">✕</button>
+      </div>
+
+      <!-- Score Card -->
+      <div class="modal-score-card">
+        <div class="score-left">
+          <span class="score-title">어린이보호구역 안전지수</span>
+          <div class="score-number-group">
+            <span id="modal-score-val" class="score-number">85</span>
+            <span class="score-max">/ 100점</span>
+          </div>
+        </div>
+        <div id="modal-grade-badge" class="score-grade-badge" style="background-color: var(--grade-2);">
+          🟢 2등급 안전
+        </div>
+      </div>
+
+      <!-- Breakdown Bars -->
+      <div class="modal-breakdown-list">
+        <div class="breakdown-item">
+          <div class="breakdown-label-group">
+            <span>📹 CCTV 설치 현황</span>
+            <span id="modal-cctv-text">4대 (30/50점)</span>
+          </div>
+          <div class="breakdown-bar-bg">
+            <div id="modal-cctv-bar" class="breakdown-bar-fill" style="width: 60%; background: #38bdf8;"></div>
+          </div>
+        </div>
+
+        <div class="breakdown-item">
+          <div class="breakdown-label-group">
+            <span>🛣️ 보호구역 도로폭</span>
+            <span id="modal-road-text">12m (30/30점)</span>
+          </div>
+          <div class="breakdown-bar-bg">
+            <div id="modal-road-bar" class="breakdown-bar-fill" style="width: 100%; background: #34d399;"></div>
+          </div>
+        </div>
+
+        <div class="breakdown-item">
+          <div class="breakdown-label-group">
+            <span>🚔 관할 경찰서 및 관리 인프라</span>
+            <span id="modal-police-text">이천경찰서 (20/20점)</span>
+          </div>
+          <div class="breakdown-bar-bg">
+            <div id="modal-police-bar" class="breakdown-bar-fill" style="width: 100%; background: #a78bfa;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-address-info">
+        📍 <span id="modal-address">경기도 이천시 증신로269번길 31</span>
+      </div>
+
+      <div class="modal-action-btns">
+        <button id="btn-recenter" class="btn-modal-action">
+          🎯 지도 중앙 보기
+        </button>
+        <button id="btn-share" class="btn-modal-action">
+          🔗 링크 공유
+        </button>
+      </div>
+    </div>
+
+    <!-- Ranking & Analytics Modal Overlay -->
+    <div id="ranking-modal" class="modal-overlay">
+      <div class="ranking-modal-card">
+        <div class="ranking-header">
+          <div class="ranking-title">🏆 전국 어린이보호구역 안전지수 랭킹</div>
+          <button id="ranking-close-btn" class="modal-close-btn">✕</button>
+        </div>
+
+        <div class="ranking-tabs">
+          <button class="tab-btn active" data-rank-type="high">🥇 제일 안전한 장소 TOP 30</button>
+          <button class="tab-btn" data-rank-type="region">📍 가장 안전한 지역(시/도) 랭킹</button>
+          <button class="tab-btn" data-rank-type="low">🚨 시설개선 필요 랭킹</button>
+        </div>
+
+        <div id="ranking-list" class="ranking-list"></div>
+      </div>
+    </div>
+
+    <!-- PRD Viewer & Save Modal Overlay -->
+    <div id="prd-modal" class="modal-overlay">
+      <div class="ranking-modal-card prd-modal-card">
+        <div class="ranking-header">
+          <div class="ranking-title">📄 SafeScore Kids 제품 요구사항 정의서 (PRD)</div>
+          <button id="prd-close-btn" class="modal-close-btn">✕</button>
+        </div>
+
+        <div class="prd-actions-bar">
+          <button id="btn-download-prd-modal" class="btn-prd-download">
+            💾 PRD 파일 다운로드 (.md)
+          </button>
+          <button id="btn-copy-prd" class="btn-prd-copy">
+            📋 PRD 텍스트 복사
+          </button>
+        </div>
+
+        <div id="prd-content" class="prd-content-view">
+          <div class="prd-loading">📄 PRD 문서를 불러오는 중...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Leaflet MarkerCluster JS -->
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <!-- Pre-parsed CSV Data & PRD Data JS -->
+  <script src="data/facilities.js"></script>
+  <script src="data/prd_data.js"></script>
+  <!-- App JS -->
+  <script src="app.js"></script>
+</body>
+</html>

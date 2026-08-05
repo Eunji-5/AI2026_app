@@ -1,0 +1,19 @@
+{
+  "name": "safescore-kids-app",
+  "version": "1.0.0",
+  "description": "세이프스코어 키즈 - 공공데이터 기반 어린이보호구역 안전지수 지도 앱",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx -y serve -l 3000",
+    "start": "npx -y serve -l 3000",
+    "parse": "node scripts/parse.js"
+  },
+  "keywords": [
+    "child-safety",
+    "open-data",
+    "leaflet",
+    "openstreetmap"
+  ],
+  "author": "SafeScore Kids Team",
+  "license": "MIT"
+}
