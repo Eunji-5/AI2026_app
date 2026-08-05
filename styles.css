@@ -167,12 +167,13 @@ body, html {
   gap: 10px;
   width: 440px;
   max-width: 100%;
-  pointer-events: none;
+  pointer-events: auto !important;
 }
 
 .search-box-wrapper {
   position: relative;
   width: 100%;
+  pointer-events: auto !important;
 }
 
 .search-input-group {
@@ -187,6 +188,8 @@ body, html {
   padding: 4px 8px 4px 16px;
   box-shadow: var(--shadow-card);
   transition: border-color 0.2s ease;
+  pointer-events: auto !important;
+  cursor: text;
 }
 
 .search-input-group:focus-within {
@@ -198,6 +201,8 @@ body, html {
   font-size: 18px;
   color: var(--text-muted);
   margin-right: 10px;
+  pointer-events: auto !important;
+  cursor: pointer;
 }
 
 .search-input {
@@ -209,6 +214,8 @@ body, html {
   font-size: 14px;
   font-weight: 500;
   padding: 10px 0;
+  pointer-events: auto !important;
+  cursor: text;
 }
 
 .search-input::placeholder {
@@ -216,13 +223,30 @@ body, html {
 }
 
 .search-clear-btn {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 800;
   cursor: pointer;
-  padding: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
   display: none;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  pointer-events: auto !important;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.search-clear-btn:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #f87171;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  transform: scale(1.1);
 }
 
 /* Search Dropdown Suggestions */
@@ -240,6 +264,7 @@ body, html {
   box-shadow: var(--shadow-card);
   display: none;
   z-index: 1001;
+  pointer-events: auto !important;
 }
 
 .quick-tag-btn {
@@ -309,7 +334,7 @@ body, html {
 
 /* Filter Chips Bar */
 .filter-chips-container {
-  pointer-events: auto;
+  pointer-events: auto !important;
   display: flex;
   gap: 8px;
   overflow-x: auto;
@@ -332,6 +357,7 @@ body, html {
 }
 
 .chip-btn {
+  pointer-events: auto !important;
   background: var(--bg-card);
   backdrop-filter: blur(12px);
   border: 1px solid var(--bg-card-border);

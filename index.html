@@ -57,7 +57,7 @@
           <div class="search-input-group">
             <span class="search-icon">🔍</span>
             <input type="text" id="search-input" class="search-input" placeholder="학교명, 지역명(예: 가산초, 이천시 송정동) 검색..." autocomplete="off">
-            <button id="search-clear-btn" class="search-clear-btn">✕</button>
+            <button id="search-clear-btn" class="search-clear-btn" onclick="window.clearSearchInput(event)">✕</button>
           </div>
           <!-- Search Dropdown -->
           <div id="search-dropdown" class="search-results-dropdown"></div>
@@ -65,12 +65,12 @@
 
         <!-- Filter Chips -->
         <div class="filter-chips-container">
-          <button class="chip-btn active" data-filter="all">🎒 전체 보기</button>
-          <button class="chip-btn" data-filter="초등학교">🏫 초등학교</button>
-          <button class="chip-btn" data-filter="유치원">🐥 유치원</button>
-          <button class="chip-btn" data-filter="어린이집">👶 어린이집</button>
-          <button class="chip-btn chip-warning" data-filter="danger">🚨 주의/위험만</button>
-          <button class="chip-btn" data-filter="safe">🟢 안전지역만</button>
+          <button class="chip-btn active" data-filter="all" onclick="window.handleCategoryFilter(this, 'all')">🎒 전체 보기</button>
+          <button class="chip-btn" data-filter="초등학교" onclick="window.handleCategoryFilter(this, '초등학교')">🏫 초등학교</button>
+          <button class="chip-btn" data-filter="유치원" onclick="window.handleCategoryFilter(this, '유치원')">🐥 유치원</button>
+          <button class="chip-btn" data-filter="어린이집" onclick="window.handleCategoryFilter(this, '어린이집')">👶 어린이집</button>
+          <button class="chip-btn chip-warning" data-filter="danger" onclick="window.handleCategoryFilter(this, 'danger')">🚨 주의/위험만</button>
+          <button class="chip-btn" data-filter="safe" onclick="window.handleCategoryFilter(this, 'safe')">🟢 안전지역만</button>
         </div>
       </div>
     </div>

@@ -34,9 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | 전국어린이보호구역표준데이터'
     }).addTo(map);
 
-    // Initialize Marker Cluster Group
+    // Initialize Marker Cluster Group (Disable chunkedLoading for instant marker updates)
     markerClusterGroup = L.markerClusterGroup({
-      chunkedLoading: true,
+      chunkedLoading: false,
       maxClusterRadius: 50,
       spiderfyOnMaxZoom: true,
       showCoverageOnHover: false,
@@ -216,6 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 5. Search & Filters
   function initEvents() {
     const searchInput = document.getElementById('search-input');
+    const searchClearBtn = document.getElementById('search-clear-btn');
     const searchDropdown = document.getElementById('search-dropdown');
     const myLocationBtn = document.getElementById('btn-my-location');
     const closeBtn = document.getElementById('modal-close-btn');
@@ -296,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const matches = filteredFacilities.filter(f =>
             f.name.toLowerCase().includes(val) || f.address.toLowerCase().includes(val)
           );
-          flyToMatchingRegion(matches);
+          flyToMatchingRegion(matches, val);
         }
       });
     }
@@ -314,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const val = e.target.value.trim().toLowerCase();
         updateFilteredData();
         if (val.length > 0) {
-          if (searchClearBtn) searchClearBtn.style.display = 'block';
+          if (searchClearBtn) searchClearBtn.style.display = 'flex';
           showSearchSuggestions(val);
         } else {
           if (searchClearBtn) searchClearBtn.style.display = 'none';
@@ -322,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // Enter Key: Fly Map to Searched Region / Facility
+      // Enter Key & Escape Key Handling
       searchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
@@ -332,18 +333,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const matches = filteredFacilities.filter(f =>
               f.name.toLowerCase().includes(val) || f.address.toLowerCase().includes(val)
             );
-            flyToMatchingRegion(matches);
+            flyToMatchingRegion(matches, val);
           }
+        } else if (e.key === 'Escape') {
+          searchInput.value = '';
+          if (searchClearBtn) searchClearBtn.style.display = 'none';
+          if (searchDropdown) searchDropdown.style.display = 'none';
+          updateFilteredData();
+          showToast('🧹 검색어가 삭제되었습니다.');
         }
       });
     }
 
     if (searchClearBtn) {
-      searchClearBtn.addEventListener('click', () => {
-        if (searchInput) searchInput.value = '';
+      searchClearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (searchInput) {
+          searchInput.value = '';
+          searchInput.focus();
+        }
         if (searchClearBtn) searchClearBtn.style.display = 'none';
         if (searchDropdown) searchDropdown.style.display = 'none';
         updateFilteredData();
+        showToast('🧹 검색어가 지워졌습니다.');
       });
     }
 
@@ -558,12 +571,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Fly map camera to region/bounds matching searched facilities
-  function flyToMatchingRegion(matches) {
-    if (!matches || matches.length === 0 || !map) return;
+  function flyToMatchingRegion(matches, queryText = '') {
+    if (!map) return;
+
+    if (!matches || matches.length === 0) {
+      showToast(`⚠️ '${queryText}' 검색 결과가 없습니다.`);
+      return;
+    }
 
     if (matches.length === 1) {
       map.flyTo([matches[0].lat, matches[0].lng], 16, { duration: 1.5 });
       openDetailModal(matches[0]);
+      showToast(`📍 ${matches[0].name} 위치로 이동했습니다.`);
     } else {
       const lats = matches.map(m => m.lat);
       const lngs = matches.map(m => m.lng);
@@ -573,6 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const maxLng = Math.max(...lngs);
 
       map.flyToBounds([[minLat, minLng], [maxLat, maxLng]], { padding: [50, 50], maxZoom: 15, duration: 1.5 });
+      showToast(`📍 검색한 ${matches.length.toLocaleString()}개 장소 지역으로 이동했습니다.`);
     }
   }
 
@@ -682,6 +702,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 2200);
   }
 
+  // Global Search Clear Handler
+  window.clearSearchInput = function(e) {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    const searchInput = document.getElementById('search-input');
+    const searchClearBtn = document.getElementById('search-clear-btn');
+    const searchDropdown = document.getElementById('search-dropdown');
+
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.focus();
+    }
+    if (searchClearBtn) searchClearBtn.style.display = 'none';
+    if (searchDropdown) searchDropdown.style.display = 'none';
+
+    updateFilteredData();
+    showToast('🧹 검색어가 지워졌습니다.');
+  };
+
+  // Global Category Filter Handler
+  window.handleCategoryFilter = function(btnEl, filterType) {
+    const chipBtns = document.querySelectorAll('.chip-btn');
+    chipBtns.forEach(b => b.classList.remove('active'));
+
+    if (btnEl) {
+      btnEl.classList.add('active');
+    } else {
+      const target = document.querySelector(`.chip-btn[data-filter="${filterType}"]`);
+      if (target) target.classList.add('active');
+    }
+
+    applyFilter(filterType);
+  };
+
   // Filter Apply Helper
   function applyFilter(filterType) {
     currentFilterType = filterType;
@@ -715,22 +771,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchQuery = (searchInput ? searchInput.value : '').trim().toLowerCase();
 
     filteredFacilities = allFacilities.filter(f => {
-      // 1. Strict Category Matching
+      // 1. 100% Pure Category Matching based on CSV Facility Type
       let matchesCategory = true;
-      const isKindergarten = f.type === '유치원' || f.name.includes('유치원') || f.name.includes('병설');
-      const isDaycare = f.type === '어린이집' || f.name.includes('어린이집');
-      const isElementary = (f.type === '초등학교' || f.type === '초등학교+어린이집' || f.name.includes('초등학교') || f.name.includes('초교')) && !isKindergarten && !isDaycare && f.type !== '유치원' && f.type !== '어린이집' && f.type !== '학원';
 
       if (currentFilterType === '초등학교') {
-        matchesCategory = isElementary;
+        // Show ONLY pure Elementary Schools (7,069 facilities, 100% icon 🏫)
+        matchesCategory = (f.type === '초등학교' || f.type === '초등학교+어린이집');
       } else if (currentFilterType === '유치원') {
-        matchesCategory = isKindergarten;
+        // Show ONLY Kindergartens (4,234 facilities, 100% icon 🐥)
+        matchesCategory = (f.type === '유치원');
       } else if (currentFilterType === '어린이집') {
-        matchesCategory = isDaycare;
+        // Show ONLY Daycares (3,054 facilities, 100% icon 👶)
+        matchesCategory = (f.type === '어린이집');
       } else if (currentFilterType === 'danger') {
-        matchesCategory = f.grade === 4 || f.grade === 5;
+        // Show ONLY Caution (Grade 4) & Danger (Grade 5) zones (3,015 facilities)
+        matchesCategory = (f.grade === 4 || f.grade === 5);
       } else if (currentFilterType === 'safe') {
-        matchesCategory = f.grade === 1 || f.grade === 2;
+        // Show ONLY Safe (Grade 2) & Very Safe (Grade 1) zones (7,257 facilities)
+        matchesCategory = (f.grade === 1 || f.grade === 2);
       }
 
       if (!matchesCategory) return false;
