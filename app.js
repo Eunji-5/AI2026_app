@@ -806,6 +806,25 @@ document.addEventListener('DOMContentLoaded', () => {
     renderMarkers(filteredFacilities);
   }
 
+  // Global Header Button Handlers for 100% Guaranteed Execution
+  window.downloadPrdFile = function(e) {
+    if (e) { e.stopPropagation(); e.preventDefault(); }
+    downloadPrdFile();
+    showToast('💾 SafeScore_Kids_PRD.md 다운로드를 시작합니다.');
+  };
+
+  window.openPrdModal = function(e) {
+    if (e) { e.stopPropagation(); e.preventDefault(); }
+    openPrdModal();
+    showToast('📄 PRD 서식 문서를 열었습니다.');
+  };
+
+  window.openRankingModalDirect = function(e) {
+    if (e) { e.stopPropagation(); e.preventDefault(); }
+    openRankingModal('high');
+    showToast('🏆 안전지수 랭킹을 열었습니다.');
+  };
+
   // Ranking Modal Logic
   function openRankingModal(rankType = 'high') {
     const rankingModal = document.getElementById('ranking-modal');

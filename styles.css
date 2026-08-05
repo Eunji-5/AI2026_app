@@ -69,11 +69,11 @@ body, html {
   gap: 10px;
   flex-wrap: wrap;
   width: 100%;
-  pointer-events: none;
+  pointer-events: auto !important;
 }
 
 .header-brand {
-  pointer-events: auto;
+  pointer-events: auto !important;
   background: var(--bg-card);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -116,7 +116,7 @@ body, html {
 }
 
 .header-actions {
-  pointer-events: auto;
+  pointer-events: auto !important;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
@@ -124,6 +124,7 @@ body, html {
 }
 
 .btn-header {
+  pointer-events: auto !important;
   background: var(--bg-card);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);

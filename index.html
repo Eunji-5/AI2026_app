@@ -36,16 +36,13 @@
         </div>
         
         <div class="header-actions">
-          <button id="btn-download-prd-direct" class="btn-header btn-header-save">
+          <button id="btn-download-prd-direct" class="btn-header btn-header-save" onclick="window.downloadPrdFile(event)">
             💾 PRD 바로 저장
           </button>
-          <button id="btn-open-prd" class="btn-header">
+          <button id="btn-open-prd" class="btn-header" onclick="window.openPrdModal(event)">
             📄 PRD 내용 보기
           </button>
-          <button id="btn-my-location" class="btn-header">
-            🎯 내 위치
-          </button>
-          <button id="btn-open-ranking" class="btn-header">
+          <button id="btn-open-ranking" class="btn-header" onclick="window.openRankingModalDirect(event)">
             🏆 안전지수 랭킹
           </button>
         </div>
